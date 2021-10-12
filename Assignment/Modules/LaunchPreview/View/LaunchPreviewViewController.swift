@@ -1,4 +1,5 @@
 import UIKit
+import WebKit
 
 protocol LaunchPreviewView: AnyObject {
     func configure(with viewModel: LaunchPreviewViewModel)
@@ -7,12 +8,19 @@ protocol LaunchPreviewView: AnyObject {
 final class LaunchPreviewViewController: UIViewController, LaunchPreviewView {
     var presenter: LaunchPreviewPresenter!
     
-    private lazy var textView: UITextView = {
-        let textView = UITextView(frame: .zero)
-        textView.translatesAutoresizingMaskIntoConstraints = false
-        textView.textAlignment = .left
-        textView.font = .systemFont(ofSize: 17, weight: .semibold)
-        return textView
+    private lazy var webView: WKWebView = {
+        let webView = WKWebView(frame: .zero)
+        webView.translatesAutoresizingMaskIntoConstraints = false
+        webView.navigationDelegate = self
+        return webView
+    }()
+    
+    private lazy var activityIndicatorView: UIActivityIndicatorView = {
+        let activityIndicatorView = UIActivityIndicatorView(style: .large)
+        activityIndicatorView.translatesAutoresizingMaskIntoConstraints = false
+        activityIndicatorView.color = .themeColor
+        activityIndicatorView.transform = CGAffineTransform(scaleX: 1.75, y: 1.75)
+        return activityIndicatorView
     }()
     
     override func viewDidLoad() {
@@ -22,7 +30,9 @@ final class LaunchPreviewViewController: UIViewController, LaunchPreviewView {
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationController?.navigationItem.largeTitleDisplayMode = .automatic
         
-        view.addSubview(textView)
+        view.addSubview(webView)
+        view.addSubview(activityIndicatorView)
+        
         setupConstraints()
         
         presenter.present()
@@ -30,15 +40,30 @@ final class LaunchPreviewViewController: UIViewController, LaunchPreviewView {
     
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            textView.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor, constant: 20.0),
-            textView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            textView.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor, constant: -20.0)
+            activityIndicatorView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            activityIndicatorView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            
+            webView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            webView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            webView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            webView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         ])
     }
     
     func configure(with viewModel: LaunchPreviewViewModel) {
         title = viewModel.launch.name
-        textView.text = viewModel.launch.details // TODO: do we need to show the wikipedia's article instead of webview?
+        activityIndicatorView.startAnimating()
+        guard let request = viewModel.webViewRequest else { return }
+        webView.load(request)
+    }
+}
+
+extension LaunchPreviewViewController: WKNavigationDelegate {
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        activityIndicatorView.stopAnimating()
+    }
+    
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        activityIndicatorView.stopAnimating()
     }
 }
