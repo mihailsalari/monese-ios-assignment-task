@@ -1,0 +1,2 @@
+project:
+	Scripts/xcodegen.sh

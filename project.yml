@@ -1,0 +1,51 @@
+name: Assignment
+options: 
+  createIntermediateGroups: true
+  indentWidth: 4
+  tabWidth: 4
+  bundleIdPrefix: "com.monese"
+configs:
+  Debug: debug
+  Release: release
+targets:
+  Assignment:
+    type: application
+    platform: iOS
+    deploymentTarget: "13.0"
+    sources:  
+      - path: Assignment
+    scheme: 
+      testTargets:
+        - AssignmentTests
+      gatherCoverageData: true
+  AssignmentTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "13.0"
+    sources:
+      - path: AssignmentTests
+    dependencies:
+      - target: Assignment
+schemes:
+  dev:
+    build:
+      targets:
+        Assignment:
+        - run
+        - test
+        - profile
+        - analyze
+        - archive
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+      - AssignmentTests
+      gatherCoverageData: true
+    profile:
+      config: Debug
+    analyze:
+      config: Debug
+    archive:
+      config: Debug
